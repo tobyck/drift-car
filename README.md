@@ -1,0 +1,1 @@
+I didn't want to work on [my school project](https://github.com/tobyck/goose-chase) so I procrastinated and made this instead. Thanks to [this guy](https://mengoart.artstation.com/projects/BmdzE8) for the car/tank thing and credit to [michaelruppe/drift-car](https://github.com/michaelruppe/drift-car) for some of the physics.
