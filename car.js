@@ -70,8 +70,10 @@ class Car {
 
     // config
     accelerationScalar = .15; // how much velocity is added when accelerating
-    friction = .97; // what percentage of velocity is kept each tick
-    agility = .06; // how fast the car can turn
+    friction = .96; // what percentage of velocity is kept each tick
+    get agility() {
+        return .06 * (keysPressed("s", "arrowdown") ? -1 : 1)
+    }
 
     constructor(pos, image, width) {
         this.pos = pos;
@@ -95,20 +97,19 @@ class Car {
 
     move() {
         // set turn rate based on keys pressed
-        if (keysPressed("a", "arrowleft")) this.turnRate = -this.agility;
-        if (keysPressed("d", "arrowright")) this.turnRate = this.agility;
-
-        // reverse steering if going backwards
-        if (keysPressed("s", "arrowdown")) this.turnRate *= -1;
+        if (keysPressed("a", "arrowleft") && keysPressed("d", "arrowright")) this.turnRate = 0;
+        else if (keysPressed("a", "arrowleft")) this.turnRate = -this.agility;
+        else if (keysPressed("d", "arrowright")) this.turnRate = this.agility;
 
         // change angle based on turn rate and velocity
-        if (Math.abs(this.velocity.magnitude()) > 0) {
+        if (this.velocity.magnitude() > 0) {
             this.steeringAngle += this.turnRate * (this.velocity.magnitude() / this.maxSpeed);
         }
 
         // accelerate/decelerate
-        if (keysPressed("w", "arrowup")) this.acceleration = new Vec(0, -this.accelerationScalar);
-        if (keysPressed("s", "arrowdown")) this.acceleration = new Vec(0, this.accelerationScalar);
+        if (keysPressed("w", "arrowup") && keysPressed("s", "arrowdown")) this.acceleration = new Vec();
+        else if (keysPressed("w", "arrowup")) this.acceleration = new Vec(0, -this.accelerationScalar);
+        else if (keysPressed("s", "arrowdown")) this.acceleration = new Vec(0, this.accelerationScalar);
         
         // stop accelerating/turning if up/down not pressed
         if (!keysPressed("w", "arrowup", "s", "arrowdown")) this.acceleration = new Vec();
@@ -117,7 +118,7 @@ class Car {
         else if (!keysPressed("a", "arrowleft", "d", "arrowright")) this.turnRate = 0;
 
         // rotate acceleration vector so it's relative to the world instead of the car
-        const relativeToWorld = this.acceleration.rotate(new Vec(0, 0), this.steeringAngle);
+        const relativeToWorld = this.acceleration.rotate(new Vec(), this.steeringAngle);
 
         // add acceleration to velocity
         this.velocity.x += relativeToWorld.x;
@@ -126,6 +127,9 @@ class Car {
         // apply friction
         this.velocity.x *= this.friction;
         this.velocity.y *= this.friction;
+
+        // stop moving completely if velocity is very small
+        if (Math.abs(this.velocity.magnitude()) < .1) this.velocity = new Vec();
 
         // move car based on velocity
         this.pos.x += this.velocity.x;
@@ -137,10 +141,10 @@ class Car {
         if (this.pos.y > carCanvas.height) this.pos.y = 0;
         if (this.pos.y < 0) this.pos.y = carCanvas.height;
 
-        // add tracks if turning
-        if (keysPressed("a", "arrowleft", "d", "arrowright") && this.velocity.magnitude() > .5) {
-            this.renderTrack(trackCtx, new Vec(this.pos.x - this.width / 2, this.pos.y + this.height / 2).rotate(this.pos, this.steeringAngle));
-            this.renderTrack(trackCtx, new Vec(this.pos.x + this.width / 2 - 3, this.pos.y + this.height / 2).rotate(this.pos, this.steeringAngle));
+        // add tracks if turning annd moving
+        if (keysPressed("d", "arrowright") ^ keysPressed("a", "arrowleft") && this.velocity.magnitude() > 0) {
+            this.renderTrack(trackCtx, new Vec(this.pos.x - this.width / 2 + 3, this.pos.y + this.height / 2).rotate(this.pos, this.steeringAngle));
+            this.renderTrack(trackCtx, new Vec(this.pos.x + this.width / 2, this.pos.y + this.height / 2).rotate(this.pos, this.steeringAngle));
         }
     }
 }
